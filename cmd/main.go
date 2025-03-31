@@ -8,18 +8,23 @@ import (
 	"google.golang.org/grpc"
 )
 
-type Server struct {
+type Application struct {
 	output.UnimplementedOutputServiceServer
+	Port string
 }
 
 func main() {
-	lis, err := net.Listen("tcp", ":6971")
+	app := &Application{
+		Port: ":6971",
+	}
+
+	lis, err := net.Listen("tcp", app.Port)
 	if err != nil {
 		log.Println(err)
 	}
 
 	s := grpc.NewServer()
-	output.RegisterOutputServiceServer(s, &Server{})
+	output.RegisterOutputServiceServer(s, app)
 
 	log.Printf("gRPC server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
