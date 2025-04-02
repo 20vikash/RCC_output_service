@@ -4,18 +4,29 @@ import (
 	"log"
 	"net"
 	output "outputservice/grpc/server"
+	"outputservice/internal/env"
+	"outputservice/internal/mq"
 
+	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc"
 )
 
 type Application struct {
 	output.UnimplementedOutputServiceServer
 	Port string
+	Mq   *amqp.Channel
 }
 
 func main() {
+	mq := &mq.MQ{
+		User: env.GetMqUser(),
+		Pass: env.GetMqPassword(),
+		Port: "5672",
+	}
+
 	app := &Application{
 		Port: ":6971",
+		Mq:   mq.ConnectToMq(),
 	}
 
 	lis, err := net.Listen("tcp", app.Port)
