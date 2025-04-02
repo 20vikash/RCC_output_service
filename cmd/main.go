@@ -37,6 +37,9 @@ func main() {
 	s := grpc.NewServer()
 	output.RegisterOutputServiceServer(s, app)
 
+	log.Println("Yes")
+	app.listenToQueue()
+
 	log.Printf("gRPC server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
