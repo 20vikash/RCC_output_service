@@ -41,10 +41,18 @@ func (q *ConQueue) AddCode(language, code, jid string) {
 }
 
 func (q *ConQueue) LatestCode() *conNode {
-	return q.Front
+	if q.Front != nil {
+		return q.Front
+	}
+
+	return nil
 }
 
 func (q *ConQueue) AckCode() *conNode {
+	if q.Front == nil {
+		return nil
+	}
+
 	t := q.Front
 	q.Front = q.Front.next
 
