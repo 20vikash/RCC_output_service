@@ -8,6 +8,15 @@ type ConQueue struct {
 	Next *ConQueue
 }
 
+func CreateConQueue(language, code, jid string) *ConQueue {
+	return &ConQueue{
+		Language: language,
+		Code:     code,
+		Jid:      jid,
+		Next:     nil,
+	}
+}
+
 func (q *ConQueue) AddCode() {
 
 }
