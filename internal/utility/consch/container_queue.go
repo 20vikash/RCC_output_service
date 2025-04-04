@@ -1,6 +1,8 @@
 package consch
 
-import "sync"
+import (
+	"sync"
+)
 
 type conNode struct {
 	Language string
