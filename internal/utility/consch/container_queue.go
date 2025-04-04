@@ -38,8 +38,8 @@ func (q *ConQueue) AddCode(language, code, jid string) {
 	}
 }
 
-func (q *ConQueue) LatestCode() {
-
+func (q *ConQueue) LatestCode() *conNode {
+	return q.Front
 }
 
 func (q *ConQueue) AckCode() {
