@@ -1,21 +1,41 @@
 package consch
 
-type ConQueue struct {
+type conNode struct {
 	Language string
 	Code     string
 	Jid      string
 
-	Next *ConQueue
+	next *conNode
 }
 
-var head *ConQueue
+func createNode(language, code, jid string) *conNode {
+	return &conNode{
+		Language: language,
+		Code:     code,
+		Jid:      jid,
+
+		next: nil,
+	}
+}
+
+type ConQueue struct {
+	Front *conNode
+}
 
 func CreateConQueue() *ConQueue {
-	return head
+	return &ConQueue{
+		Front: createNode("", "", ""),
+	}
 }
 
-func (q *ConQueue) AddCode() {
-
+func (q *ConQueue) AddCode(language, code, jid string) {
+	if q.Front == nil {
+		q.Front = createNode(language, code, jid)
+	} else {
+		n := createNode(language, code, jid)
+		q.Front.next = n
+		q.Front = n
+	}
 }
 
 func (q *ConQueue) LatestCode() {
