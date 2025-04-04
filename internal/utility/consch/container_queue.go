@@ -8,8 +8,10 @@ type ConQueue struct {
 	Next *ConQueue
 }
 
+var head *ConQueue
+
 func CreateConQueue() *ConQueue {
-	return &ConQueue{}
+	return head
 }
 
 func (q *ConQueue) AddCode() {
