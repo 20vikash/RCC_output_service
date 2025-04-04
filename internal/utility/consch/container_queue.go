@@ -23,9 +23,7 @@ type ConQueue struct {
 }
 
 func CreateConQueue() *ConQueue {
-	return &ConQueue{
-		Front: createNode("", "", ""),
-	}
+	return &ConQueue{}
 }
 
 func (q *ConQueue) AddCode(language, code, jid string) {
@@ -33,8 +31,12 @@ func (q *ConQueue) AddCode(language, code, jid string) {
 		q.Front = createNode(language, code, jid)
 	} else {
 		n := createNode(language, code, jid)
-		q.Front.next = n
-		q.Front = n
+		t := q.Front
+		for t.next != nil {
+			t = t.next
+		}
+
+		t.next = n
 	}
 }
 
@@ -42,8 +44,11 @@ func (q *ConQueue) LatestCode() *conNode {
 	return q.Front
 }
 
-func (q *ConQueue) AckCode() {
+func (q *ConQueue) AckCode() *conNode {
+	t := q.Front
+	q.Front = q.Front.next
 
+	return t
 }
 
 func (q *ConQueue) PeekCode() {
