@@ -50,7 +50,3 @@ func (q *ConQueue) AckCode() *conNode {
 
 	return t
 }
-
-func (q *ConQueue) PeekCode() {
-
-}
