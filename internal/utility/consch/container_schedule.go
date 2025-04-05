@@ -11,6 +11,9 @@ var runners = make(map[string]bool)
 var pqChan = make(chan bool)
 var pcChan = make(chan bool)
 
+var pyOccupied = false
+var pyCount = 0
+
 var pythonQueue = ConQueue{}
 
 func init() {
@@ -28,10 +31,32 @@ func AddToPythonQueue(language, code, jid string) {
 	pqChan <- true
 }
 
-func DoneExec() {
-	pcChan <- true
+func PyDoneExec(number int) {
+	runners[fmt.Sprintf("rcc-python_runner-%s", string(rune(number)))] = true
+
+	if pyOccupied {
+		pcChan <- true
+	}
 }
 
 func PythonSchedule() {
+	for range pqChan {
+		if pyOccupied {
+			<-pcChan
+		} else {
+			for i := range noOfRunners {
+				if runners[fmt.Sprintf("rcc-python_runner-%s", string(rune(i)))] {
+					runners[fmt.Sprintf("rcc-python_runner-%s", string(rune(i)))] = false
+					pyCount++
 
+					if pyCount == 5 {
+						pyOccupied = true
+					}
+
+					//TODO: Call the function that actually copies the files into the container for exec
+					break
+				}
+			}
+		}
+	}
 }
