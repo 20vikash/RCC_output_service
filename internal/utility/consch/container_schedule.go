@@ -57,7 +57,7 @@ func PythonSchedule() {
 				}
 
 				latest := pythonQueue.LatestCode()
-				execPython(latest, i)
+				go execPython(latest, i)
 
 				break
 			}
