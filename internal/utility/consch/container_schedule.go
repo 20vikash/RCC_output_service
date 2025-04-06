@@ -28,7 +28,10 @@ func init() {
 
 func AddToPythonQueue(language, code, jid string) {
 	pythonQueue.AddCode(language, code, jid)
-	pqChan <- true
+
+	go func() {
+		pqChan <- true
+	}()
 }
 
 func PyDoneExec(number int) {
