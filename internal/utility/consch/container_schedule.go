@@ -46,19 +46,20 @@ func PythonSchedule() {
 	for range pqChan {
 		if pyOccupied {
 			<-pcChan
-		} else {
-			for i := range noOfRunners {
-				if runners[fmt.Sprintf("rcc-python_runner-%s", string(rune(i)))] {
-					runners[fmt.Sprintf("rcc-python_runner-%s", string(rune(i)))] = false
-					pyCount++
+		}
+		for i := range noOfRunners {
+			if runners[fmt.Sprintf("rcc-python_runner-%s", string(rune(i)))] {
+				runners[fmt.Sprintf("rcc-python_runner-%s", string(rune(i)))] = false
+				pyCount++
 
-					if pyCount == 5 {
-						pyOccupied = true
-					}
-
-					//TODO: Call the function that actually copies the files into the container for exec
-					break
+				if pyCount == 5 {
+					pyOccupied = true
 				}
+
+				latest := pythonQueue.LatestCode()
+				execPython(latest, i)
+
+				break
 			}
 		}
 	}
