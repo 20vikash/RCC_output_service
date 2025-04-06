@@ -5,8 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
-	"os/exec"
+	"net/http"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -16,37 +17,58 @@ type MqNode struct {
 	Output string
 }
 
+type flaskResponse struct {
+	Output   string `json:"output"`
+	Error    string `json:"error"`
+	ExitCode int    `json:"exit_code"`
+}
+
 func execPython(node *conNode, containerNumber int) {
+	log.Println("Executing")
+
 	defer PyDoneExec(containerNumber)
 
-	containerName := fmt.Sprintf("rcc-python_runner-%v", containerNumber)
+	containerHost := fmt.Sprintf("http://rcc-python_runner-%v:8000/run", containerNumber)
 
-	code := node.Code
+	payload := map[string]string{"code": node.Code}
+	jsonData, _ := json.Marshal(payload)
 
-	cmd := exec.Command("docker", "exec", containerName, "python3", "-c", code)
-
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	err := cmd.Run()
-
+	resp, err := http.Post(containerHost, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
-		mq := &MqNode{
+		log.Println("HTTP error:", err)
+		pushToMq(context.Background(), &MqNode{
 			Jid:    node.Jid,
-			Output: stderr.String(),
-		}
-
-		pushToMq(context.Background(), mq, ch)
+			Output: "Failed to contact Python runner",
+		}, ch)
 		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+
+	var res flaskResponse
+	err = json.Unmarshal(body, &res)
+	if err != nil {
+		log.Println("Failed to decode response:", err)
+		pushToMq(context.Background(), &MqNode{
+			Jid:    node.Jid,
+			Output: "Failed to parse Python runner output",
+		}, ch)
+		return
+	}
+
+	output := res.Output
+	if res.Error != "" {
+		output = res.Error
 	}
 
 	mq := &MqNode{
 		Jid:    node.Jid,
-		Output: stdout.String(),
+		Output: output,
 	}
 
 	pushToMq(context.Background(), mq, ch)
+	log.Println("Output:", mq.Output)
 }
 
 func pushToMq(ctx context.Context, mq *MqNode, channel *amqp.Channel) {

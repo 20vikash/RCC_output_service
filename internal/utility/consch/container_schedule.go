@@ -2,8 +2,10 @@ package consch
 
 import (
 	"fmt"
+	"log"
 	"outputservice/internal/env"
 	"outputservice/internal/mq"
+	"sync"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -22,6 +24,8 @@ var pyCount = 0
 
 var pythonQueue = ConQueue{}
 
+var mu sync.Mutex
+
 var (
 	con *amqp.Connection
 	ch  *amqp.Channel
@@ -37,9 +41,9 @@ func init() {
 	con = mq.ConnectToMq()
 	ch = mq.CreateChannel(con)
 
-	for range noOfLanguages {
+	for i := range noOfLanguages {
 		for j := range noOfRunners {
-			runners[fmt.Sprintf("rcc-%s_runner-%s", languages[j], string(rune(j)))] = true
+			runners[fmt.Sprintf("rcc-%s_runner-%s", languages[i], string(rune(j+1)))] = true
 		}
 	}
 
@@ -55,29 +59,41 @@ func AddToPythonQueue(language, code, jid string) {
 }
 
 func PyDoneExec(number int) {
+	log.Println("Done")
 	runners[fmt.Sprintf("rcc-python_runner-%s", string(rune(number)))] = true
 
+	mu.Lock()
+	pyCount--
+	mu.Unlock()
+
 	if pyOccupied {
+		pyOccupied = false
 		pcChan <- true
 	}
 }
 
 func PythonSchedule() {
 	for range pqChan {
+		log.Println(pyCount)
 		if pyOccupied {
+			log.Println("2 asdasdasda")
 			<-pcChan
 		}
 		for i := range noOfRunners {
-			if runners[fmt.Sprintf("rcc-python_runner-%s", string(rune(i)))] {
-				runners[fmt.Sprintf("rcc-python_runner-%s", string(rune(i)))] = false
+			if runners[fmt.Sprintf("rcc-python_runner-%s", string(rune(i+1)))] {
+				runners[fmt.Sprintf("rcc-python_runner-%s", string(rune(i+1)))] = false
+
+				mu.Lock()
 				pyCount++
+				mu.Unlock()
 
 				if pyCount == 5 {
 					pyOccupied = true
 				}
 
-				latest := pythonQueue.LatestCode()
-				go execPython(latest, i)
+				latest := pythonQueue.AckCode()
+				log.Println(latest.Language)
+				go execPython(latest, i+1)
 
 				break
 			}

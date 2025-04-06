@@ -1,6 +1,16 @@
 package main
 
-import "log"
+import (
+	"encoding/json"
+	"log"
+	"outputservice/internal/utility/consch"
+)
+
+type Mq struct {
+	Code     string
+	Jid      string
+	Language string
+}
 
 func (app *Application) listenToQueue() {
 	q, err := app.Mq.QueueDeclare(
@@ -29,9 +39,15 @@ func (app *Application) listenToQueue() {
 	}
 
 	go func() {
+		r := &Mq{}
+
 		for d := range msgs {
+			json.Unmarshal(d.Body, r)
+
 			log.Printf("Received a message: %s", d.Body)
 			err := d.Ack(false)
+
+			consch.AddToPythonQueue(r.Language, r.Code, r.Jid)
 
 			if err != nil {
 				log.Println("Failed to ack the message")
