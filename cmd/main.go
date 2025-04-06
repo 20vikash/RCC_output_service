@@ -24,9 +24,11 @@ func main() {
 		Port: "5672",
 	}
 
+	con := mq.ConnectToMq()
+
 	app := &Application{
 		Port: ":6971",
-		Mq:   mq.ConnectToMq(),
+		Mq:   mq.CreateChannel(con),
 	}
 
 	lis, err := net.Listen("tcp", app.Port)

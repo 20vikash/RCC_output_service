@@ -1,6 +1,12 @@
 package consch
 
-import "fmt"
+import (
+	"fmt"
+	"outputservice/internal/env"
+	"outputservice/internal/mq"
+
+	amqp "github.com/rabbitmq/amqp091-go"
+)
 
 var noOfRunners = 5
 var noOfLanguages = 1
@@ -16,7 +22,21 @@ var pyCount = 0
 
 var pythonQueue = ConQueue{}
 
+var (
+	con *amqp.Connection
+	ch  *amqp.Channel
+)
+
 func init() {
+	mq := &mq.MQ{
+		User: env.GetMqUser(),
+		Pass: env.GetMqPassword(),
+		Port: "5672",
+	}
+
+	con = mq.ConnectToMq()
+	ch = mq.CreateChannel(con)
+
 	for range noOfLanguages {
 		for j := range noOfRunners {
 			runners[fmt.Sprintf("rcc-%s_runner-%s", languages[j], string(rune(j)))] = true
