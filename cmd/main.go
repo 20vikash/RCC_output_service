@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net"
-	output "outputservice/grpc/server"
 	"outputservice/internal/env"
 	"outputservice/internal/mq"
 
@@ -12,7 +11,6 @@ import (
 )
 
 type Application struct {
-	output.UnimplementedOutputServiceServer
 	Port string
 	Mq   *amqp.Channel
 }
@@ -37,7 +35,6 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	output.RegisterOutputServiceServer(s, app)
 
 	log.Println("Yes")
 	app.listenToQueue()
